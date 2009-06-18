@@ -223,6 +223,12 @@ __END__
 
 =head1 NAME
 
+--LAZY MODE START
+Hi !
+If you think you can help by writing documentation at my place, 
+then you are right and welcome !
+--LAZY MODE Still activate ! :)
+
 Powerbuilder::PBVM - Perl extension for blah blah blah
 
 =head1 SYNOPSIS
@@ -257,11 +263,11 @@ If you have a web site set up for your module, mention it here.
 
 =head1 AUTHOR
 
-A. U. Thor, E<lt>a.u.thor@a.galaxy.far.far.awayE<gt>
+Nicolas GEORGES, E<lt>xlat@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by A. U. Thor
+Copyright (C) 2009 by Nicolas GEORGES
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,
