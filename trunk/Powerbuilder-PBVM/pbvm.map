@@ -1,0 +1,4 @@
+TYPEMAP
+LPCTSTR		T_PV
+pbstring	T_IV
+DWORD		T_IV
