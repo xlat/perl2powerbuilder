@@ -1,0 +1,28 @@
+This will explain what things should you do in order to start to compile this package.
+
+Note:
+
+	If you find a way to compile my code without patching them your welcome !
+	If you find a way to compile my code using gcc your welcome !
+
+1) You must have:
+
+- Perl 5.8.8 (not tested with others) and the following packages:
+	- InlineX::CPP2XS
+	- File::Slurp
+- MS Visual Studio v6.0 (not tested with others)
+- Powerbuilder 10.5 SDK ( PBNI ) installed.
+
+2) You may have to patch the following files:
+
+- MATH.H ( in ms visual v6.0 )
+
+patched by adding 
+#if !defined( H_PERL ) 
+template<class _Ty> 
+... 
+#end if
+
+- PBNI.H ( in powerbuilder directory )
+comment redefinition of TRUE and FALSE constant or use a #ifndef (H_PERL).
+
