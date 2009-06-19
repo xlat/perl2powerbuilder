@@ -1,5 +1,5 @@
-Powerbuilder-PBVM version 0.01
-==============================
+Powerbuilder version 0.01
+=========================
 
 The README is used to introduce the module and provide instructions on
 how to install the module, any machine dependencies it may have (for
@@ -17,11 +17,9 @@ INSTALLATION
 To install this module type the following:
 
    perl Makefile.PL
-   nmake
-   nmake test
-   nmake install
-   nmake dist
-   perl -MPPM::Make -e"PPM::Make->new->make_ppm();"
+   make
+   make test
+   make install
 
 DEPENDENCIES
 
@@ -33,7 +31,7 @@ COPYRIGHT AND LICENCE
 
 Put the correct copyright and licence information here.
 
-Copyright (C) 2009 by Nicolas GEORGES
+Copyright (C) 2009 by Nicolas GEORGES.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,
