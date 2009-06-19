@@ -1,9 +1,11 @@
 package Powerbuilder;
 use Powerbuilder::PBVM;
+use Powerbuilder::Value;
+use Powerbuilder::Object;
 use 5.008008;
-use strict;
+#~ use strict;
 use warnings;
-
+use Carp;
 require Exporter;
 
 our @ISA = qw(Exporter);
@@ -29,19 +31,45 @@ our $VERSION = '0.01';
 
 
 # Preloaded methods go here.
-sub create{	#create an object
+sub new{
+	my $class = shift;
+	my $self = bless {}, $class;
+	$self->{VM} = new Powerbuilder::PBVM;
+	$self->open( @_ ) if @_;
+	return $self;
 }
 
-sub destroy{ #destroy an object
-}
-
-sub open{	#open session
+sub open{	#open a session
+	my $self = shift;
+	my $project = shift;	#we may check if ARG is a HASH ref...
+	return $self->{VM}->project( $project );
 }
 
 sub run{	#run application | same as open but run application.
 }
 
 sub close{	#close session
+	my $self = shift;
+	$self->{VM}->Release;
+}
+#-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+sub create{	#create an object
+	my $self = shift;
+	my $classname = shift;	#must be a classname
+	#TODO: find a way to determine where to look for the right pbgroup_' type ... (eg: Datawindow, Window, UserObject,...)
+	my $groupid;
+	foreach my $group ( pbgroup_userobject, pbgroup_window, pbgroup_datawindow  ){
+		$groupid = $self->{VM}->FindGroup( $classname,  $group) and last;
+	}
+	croak "no group for `$classname`" unless $groupid;
+	
+	my $classid = $self->{VM}->FindClass( $groupid, $classname ) or croak "no class for `$classname`";
+	my $pbobj = $self->{VM}->NewObject( $classid ) or croak "could not create object for `$classname`";
+	return new Powerbuilder::Object( $pbobj );
+}
+
+sub destroy{ #destroy an object
 }
 
 sub find_macting_prototype{	# ( $name, $type = FUNCT|EVENT, \@args (of_type Powerbuilder::Value...) [ ,$class]
