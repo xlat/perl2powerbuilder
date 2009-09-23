@@ -1,0 +1,14 @@
+#summary Description
+#labels Featured
+= Introduction =
+
+It is a bridge allowing to manipulate Powerbuilder objects from Perl scripts.
+
+
+= Details =
+
+Working with Powerbuilder
+* v11.5 (tested on build 3127)
+* v10.5 (need some change in source... dirty at this time)
+
+*documentation in progress : you are welcome !*
