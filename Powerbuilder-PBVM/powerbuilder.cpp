@@ -1,7 +1,8 @@
 //#TODO: prefere Perl's memory allocation function than malloc/free
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbext.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbni.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\PBCTXIF.h"
+#define PBVM_DLL "pbvm115.dll"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbext.h"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbni.h"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\PBCTXIF.h"
 //#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\PBCTXIF.h"
 #include "stdio.h"
 
@@ -218,12 +219,13 @@ class PBVM {
 	PBVM(){ 
         pbvm = NULL;
         i_session = NULL;
-        i_hinst = LoadLibrary("pbvm105.dll"); 
+		i_injected = false;
+        i_hinst = LoadLibrary(PBVM_DLL); 
         getvm = (P_PB_GetVM)GetProcAddress(i_hinst,"PB_GetVM");
         getvm(&pbvm);
     }
 	~PBVM(){
-        if(i_session){            
+        if(i_session && !i_injected){
             i_session->Release();
         }
         FreeLibrary(i_hinst); 
@@ -234,11 +236,29 @@ class PBVM {
 			croak("No session !");
 		return i_session;
 	}
+	
+	void AttachSession(){
+		//Becare By using this method: you absolutely need to be in the same process than the Session Owner
+		//This could be done via some DllInjection thecnical...
+		//This hack was tested only with PBVM115.DLL( v11.5 build 3127 )
+		//seams to be a constant pointer address in the owner process
+		DWORD* sessionptr= (DWORD*)0xEF7940;
+		sessionptr = (DWORD*)sessionptr[0];
+		i_session = (IPB_Session*)((void*)sessionptr);	//vmGetInstance() ???
+		i_injected = true;
+		
+	}		
 
 	int ReleaseSession(){
-		session->Release();
-		i_session = NULL;
+		if (i_session!=NULL){
+			session->Release();		
+			i_session = NULL;
+		}
 		return 0;
+	}
+	
+	unsigned long GetSessionAddr(){
+		return (unsigned long)((void*)i_session);
 	}
 	
 	void* ref(char* ptr){ return ptr; }
@@ -1534,6 +1554,7 @@ private:
 	HINSTANCE i_hinst;
 	P_PB_GetVM getvm;
 	IPB_VM* pbvm;
-	IPB_Session* i_session;	
+	IPB_Session* i_session;
+	bool i_injected;
 };
 
