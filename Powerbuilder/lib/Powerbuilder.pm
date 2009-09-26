@@ -27,46 +27,70 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
+our $VM = undef;
+our $SESSION = undef;	#For now, Powerbuilder package act as a singleton (not really in fact)...
 
+sub VM{ return $_[0]->{VM}; }
 # Preloaded methods go here.
 sub new{
 	my $class = shift;
 	my $self = bless {}, $class;
 	$self->{VM} = new Powerbuilder::PBVM;
 	$self->open( @_ ) if @_;
+	$Powerbuilder::SESSION = $self;
 	return $self;
 }
 
 sub open{	#open a session
 	my $self = shift;
 	my $project = shift;	#we may check if ARG is a HASH ref...
-	return $self->{VM}->project( $project );
+	my @args;
+	my $dir = undef;
+	#Extract path if any
+	if($project=~/^(.*[\/\\])([^\/\\]+)$/){
+		use Cwd;
+		$dir = cwd;
+		chdir($1);
+		@args = $self->{VM}->project( $2 );
+	}
+	else{
+		@args = $self->{VM}->project( $project );
+	}
+	my $r = $self->{VM}->CreateSession( @args );
+	#~ chdir($dir) if $dir;
+	
+	$Powerbuilder::VM = $self->VM;	#Only one session at a time...
+	
+	return $r;
 }
 
 sub run{	#run application | same as open but run application.
+	#~ $Powerbuilder::VM = $self->VM;
 }
 
 sub close{	#close session
 	my $self = shift;
-	$self->{VM}->Release;
+	$self->{VM}->ReleaseSession;
 }
 #-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
 sub create{	#create an object
 	my $self = shift;
 	my $classname = shift;	#must be a classname
-	#TODO: find a way to determine where to look for the right pbgroup_' type ... (eg: Datawindow, Window, UserObject,...)
 	my $groupid;
-	foreach my $group ( pbgroup_userobject, pbgroup_window, pbgroup_datawindow  ){
+	
+	foreach my $group ( pbgroup_application , pbgroup_datawindow , pbgroup_function , 
+		pbgroup_menu , pbgroup_proxy , pbgroup_structure , 
+		pbgroup_userobject , pbgroup_window , pbgroup_unknown ){
 		$groupid = $self->{VM}->FindGroup( $classname,  $group) and last;
 	}
 	croak "no group for `$classname`" unless $groupid;
 	
 	my $classid = $self->{VM}->FindClass( $groupid, $classname ) or croak "no class for `$classname`";
 	my $pbobj = $self->{VM}->NewObject( $classid ) or croak "could not create object for `$classname`";
-	return new Powerbuilder::Object( $pbobj );
+	return new Powerbuilder::Object( $self, 0, $pbobj );
 }
 
 sub destroy{ #destroy an object

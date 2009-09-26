@@ -13,10 +13,23 @@ extern "C" {
 #endif
 
 //#TODO: prefere Perl's memory allocation function than malloc/free
+#define PB105
+//~ #define PB115
+
+#ifdef PB115
+#define PBVM_DLL "pbvm115.dll"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbext.h"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbni.h"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\PBCTXIF.h"
+#endif
+
+#ifdef PB105
+#define PBVM_DLL "pbvm105.dll"
 #include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbext.h"
 #include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbni.h"
 #include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\PBCTXIF.h"
-//#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\PBCTXIF.h"
+#endif
+
 #include "stdio.h"
 
 #include "ppport.h"
@@ -232,12 +245,13 @@ class PBVM {
 	PBVM(){ 
         pbvm = NULL;
         i_session = NULL;
-        i_hinst = LoadLibrary("pbvm105.dll"); 
+		i_injected = false;
+        i_hinst = LoadLibrary(PBVM_DLL); 
         getvm = (P_PB_GetVM)GetProcAddress(i_hinst,"PB_GetVM");
         getvm(&pbvm);
     }
 	~PBVM(){
-        if(i_session){            
+        if(i_session && !i_injected){
             i_session->Release();
         }
         FreeLibrary(i_hinst); 
@@ -248,13 +262,32 @@ class PBVM {
 			croak("No session !");
 		return i_session;
 	}
+	
+	void AttachSession(){
+		//Becare By using this method: you absolutely need to be in the same process than the Session Owner
+		//This could be done via some DllInjection thecnical...
+		//This hack was tested only with PBVM115.DLL( v11.5 build 3127 )
+		//seams to be a constant pointer address in the owner process
+		DWORD* sessionptr= (DWORD*)0xEF7940;
+		sessionptr = (DWORD*)sessionptr[0];
+		i_session = (IPB_Session*)((void*)sessionptr);	//vmGetInstance() ???
+		i_injected = true;
+		
+	}		
 
 	int ReleaseSession(){
-		session->Release();
-		i_session = NULL;
+		if (i_session!=NULL){
+			session->Release();		
+			i_session = NULL;
+		}
 		return 0;
 	}
 	
+	unsigned long GetSessionAddr(){
+		return (unsigned long)((void*)i_session);
+	}
+	
+	unsigned long getptr(void* ptr){ return (unsigned long)ptr; }
 	void* ref(char* ptr){ return ptr; }
 	char* unref(void* ptr){ return (char*)ptr; }
 	//La liste des librairies doit etre séparé par des ;
@@ -1548,7 +1581,8 @@ private:
 	HINSTANCE i_hinst;
 	P_PB_GetVM getvm;
 	IPB_VM* pbvm;
-	IPB_Session* i_session;	
+	IPB_Session* i_session;
+	bool i_injected;
 };
 
 
@@ -1803,8 +1837,30 @@ PBVM::new()
 void
 PBVM::DESTROY()
     
+void
+PBVM::AttachSession()
+    PREINIT:
+	I32 *	__temp_markstack_ptr;
+    PPCODE:
+	__temp_markstack_ptr = PL_markstack_ptr++;
+	THIS->AttachSession();
+        if (PL_markstack_ptr != __temp_markstack_ptr) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = __temp_markstack_ptr;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return; /* assume stack size is correct */
+
 int
 PBVM::ReleaseSession()
+    
+unsigned long
+PBVM::GetSessionAddr()
+    
+unsigned long
+PBVM::getptr(ptr)
+	void *	ptr
     
 void *
 PBVM::ref(ptr)

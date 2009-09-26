@@ -3,6 +3,7 @@ Save Format v3.0(19990112)
 @end;
 @begin Targets
  0 "scriptingpb.pbt";
+ 1 "test_hacking.pbt";
 @end;
 DefaultTarget "scriptingpb.pbt";
 DefaultRemoteTarget "scriptingpb.pbt";
