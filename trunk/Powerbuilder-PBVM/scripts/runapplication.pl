@@ -9,13 +9,15 @@ $|=1;
 
 #~ my $projectfile = 'scriptingpb.pbt';
 #~ chdir 'C:\Developpement\Perl\Powerbuilder-PBVM\t';
-my $projectfile = 'explore.pbt';
-chdir 'C:\Developpement\Powerbuilder\explore-2.1.0\Sources';
+chdir 'C:\developpement\perl\Powerbuilder\perl2powerbuilder\Powerbuilder\t';
 
 my $pb = new Powerbuilder::PBVM;
 print "Running application...\n";
-$pb->RunApplication( $pb->project( $projectfile ), '--batch' );
+$pb->CreateSession( $pb->project('scriptingpb.pbt') );
+#~ $pb->RunApplication( 'scriptingpb.exe', 'scriptingpb.exe', 1, '' );
 print "Application running...\n";
+use Data::Dumper;
+print Dumper( $pb->{PBVM} );
 $pb->ReleaseSession();
 
 END{

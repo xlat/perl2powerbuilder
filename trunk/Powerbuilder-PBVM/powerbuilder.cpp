@@ -1,9 +1,21 @@
 //#TODO: prefere Perl's memory allocation function than malloc/free
+#define PB105
+//~ #define PB115
+
+#ifdef PB115
 #define PBVM_DLL "pbvm115.dll"
 #include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbext.h"
 #include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbni.h"
 #include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\PBCTXIF.h"
-//#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\PBCTXIF.h"
+#endif
+
+#ifdef PB105
+#define PBVM_DLL "pbvm105.dll"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbext.h"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbni.h"
+#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\PBCTXIF.h"
+#endif
+
 #include "stdio.h"
 
 #include "ppport.h"
@@ -261,6 +273,7 @@ class PBVM {
 		return (unsigned long)((void*)i_session);
 	}
 	
+	unsigned long getptr(void* ptr){ return (unsigned long)ptr; }
 	void* ref(char* ptr){ return ptr; }
 	char* unref(void* ptr){ return (char*)ptr; }
 	//La liste des librairies doit etre séparé par des ;
