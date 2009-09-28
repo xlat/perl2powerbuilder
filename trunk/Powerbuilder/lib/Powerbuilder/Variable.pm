@@ -6,6 +6,25 @@ use Carp;
 #TODO: implement a sync() method to synchronize data from PB to perl
 #	or from perl to PB
 #	we could use an autosync property in "::Variable" or directly in "Powerbuilder" if needed...
+our %typename = (
+		"".Powerbuilder::PBVM::constant("pbvalue_int") => 'Int', 
+		"".Powerbuilder::PBVM::constant("pbvalue_uint") => 'Uint', 
+		"".Powerbuilder::PBVM::constant("pbvalue_byte") => 'Byte', 
+		"".Powerbuilder::PBVM::constant("pbvalue_long") => 'Long', 
+		"".Powerbuilder::PBVM::constant("pbvalue_longlong") => 'Longlong', 
+		"".Powerbuilder::PBVM::constant("pbvalue_ulong") => 'Ulong', 
+		"".Powerbuilder::PBVM::constant("pbvalue_real") => 'Real', 
+		"".Powerbuilder::PBVM::constant("pbvalue_double") => 'Double', 
+		"".Powerbuilder::PBVM::constant("pbvalue_dec") => 'Dec', 
+		"".Powerbuilder::PBVM::constant("pbvalue_string") => 'String', 
+		"".Powerbuilder::PBVM::constant("pbvalue_boolean") => 'Bool', 
+		"".Powerbuilder::PBVM::constant("pbvalue_any") => 'PBAny',
+		"".Powerbuilder::PBVM::constant("pbvalue_blob") => 'Blob',
+		"".Powerbuilder::PBVM::constant("pbvalue_date") => 'Date',
+		"".Powerbuilder::PBVM::constant("pbvalue_time") => 'Time',
+		"".Powerbuilder::PBVM::constant("pbvalue_datetime") => 'DateTime',
+		"".Powerbuilder::PBVM::constant("pbvalue_char") => 'Char',
+	);
 
 sub isnumeric{
 	use Scalar::Util qw( looks_like_number  );
@@ -27,6 +46,9 @@ sub new{
 		scope => 'anonymous',	#anonymous|argument|local|instance|shared|global
 		hasacquired => 0,		#should we release it on DESTROY
 		isreferenced => 0,		#should we dec reference on DESTROY
+		classname => undef,
+		classid => undef,
+		groupid => undef,
 	}, $class;
 	$self->{session} = $Powerbuilder::SESSION;	#Always the last created instance of Powerbuilder package !
 	$self->{VM} = $self->{session}->{VM};	#create alias :)
@@ -36,7 +58,8 @@ sub new{
 		#Load only once (all instance will share the same declaration)
 		#initialize automethods.
 		foreach my $sub( qw/ SESSION VM value isnull isobject isenum isstruct 
-			isarray issimplearray datatypeof scope hasacquired isreferenced / ){
+			isarray issimplearray datatypeof scope hasacquired isreferenced 
+			classname classid groupid / ){
 			my $clsub = $class."::".$sub;
 			*$clsub = sub{ 
 				return $_[0]->{$sub} unless scalar(@_)>1;
@@ -48,6 +71,11 @@ sub new{
 	$self->set( @_ ) if @_;
 
 	return $self;
+}
+
+sub create{	#hack for new => sugar creator for object.
+	my ($perlclass, $pbclassname) = @_;
+	return new( $perlclass, 'class' => $pbclassname);
 }
 
 sub pbvalue{
@@ -173,11 +201,32 @@ sub set{
 				# => maybe using a Devel:: package
 	#3c.4)		scalar : string
 
+	#TODO: find a way to handle pbarray !
+	#	may we could use ( 'array' => pbarray ) :)
+	if(scalar(@_) == 2 && defined($_[0]) && $_[0] eq 'class'){
+		#create an object of classname $_[1]
+		my ($arg1, $classname) = @_;
+		my $groupid;
+		foreach my $group ( pbgroup_application , pbgroup_datawindow , pbgroup_function , 
+			pbgroup_menu , pbgroup_proxy , pbgroup_structure , 
+			pbgroup_userobject , pbgroup_window , pbgroup_unknown ){
+			$groupid = $self->VM->FindGroup( $classname,  $group) and last;
+		}
+		croak "no group for `$classname`" unless $groupid;
+		my $classid = $self->VM->FindClass( $groupid, $classname ) or croak "no class for `$classname`";
+		my $pbobj = $self->VM->NewObject( $classid ) or croak "could not create object for `$classname`";
+		$self->classname( $classname );
+		$self->classid( $classid );
+		$self->groupid( $groupid );
+		$self->_inlineset( 0, 1, 0, 0, 0, 0, $classid, $pbobj, $self );
+		return;
+	}
+
 	if(scalar(@_) == 4 && defined($_[0]) && $_[0] eq 'type' 
 		&& defined($_[2]) && $_[2] eq 'value'){
 		#This is of the form: ( type => pbvalue_object|'object', value=>323540159 )
 		my ($type, $value) = ($_[1], $_[3]);
-		#TODO: may be tricky with perl's "sub value()" because it should be syncrhonised here !
+		#TODO: may be buggy with perl's "sub value()" because it should be syncrhonised here !
 		$self->_inlineset( !defined($value), 0, 0, 0, 0, 0, $type, $value, undef);
 		#mean we take value from Powerbuilder session and store it in perl format
 		$self->syncperl;
@@ -235,6 +284,66 @@ sub set{
 #sub get_perl => value
 #sub get_pb => pbvalue 
 
+sub FieldCount{
+	my $self = shift;
+	return $self->VM->GetNumOfFields( $self->classid );
+}
+
+sub GetTypeName{
+	my ($self, $type, $isobject, $isarray, $isenum) = @_;
+	return 'Array' if $isarray;
+	return 'Object' if $isobject;
+	#remap type id to name of type
+	return $type = $typename{$type} if exists $typename{$type};
+}
+
+sub GetField{
+	my ($self, $fieldname) = @_;
+	my $cid = $self->classid;
+	my $fid = $self->VM->GetFieldID($cid, $fieldname );
+	my $type = $self->GetTypeName( $self->VM->GetFieldType($cid, $fid), 
+									$self->VM->IsFieldObject( $cid, $fid ), 
+									$self->VM->IsFieldArray( $cid, $fid ) );
+	my $isnull=0;
+	my $value;	
+	eval( "\$value = \$self->VM->Get${type}Field(\$self->pbvalue, $fid, \$isnull)" );
+	my $field;
+	if($self->VM->IsFieldObject( $cid, $fid )){
+		my $classid = $self->VM->GetClass($value);
+		croak("Object not handled yet!\n");
+		$field = new Powerbuilder::Variable( class => $self->VM->GetClassName($classid),
+			value => $value );	#TODO: look in set(...) for value if any, then don't 
+								# call NewObject but simply set the pbvalue !
+	}
+	elsif($self->VM->IsFieldObject( $cid, $fid )){
+		croak("Array not handled yet!\n");
+		#TODO: handle arrays !!!
+		#if SimpleArray :
+			# loop on each item and buil a list of args for new Powerbuilder::Variable(...)
+		#else
+			# may we should create an array of array ?
+			# string t[2][2] in powerbuilder => [ [0, 1], [0, 1] ] in perl...
+			#or add PBLike getter :
+			#	my $vararray->get( dim1_index, dim2_index, ... );
+			#	my $vararray->set( dim1_index, dim2_index, ... );
+			#	my $vararray->upperbound( dim_id );
+			#	my $vararray->lowerbound( dim_id );
+	}
+	else{
+		$field = new Powerbuilder::Variable( type => $self->VM->GetFieldType($cid, $fid),
+			value => $value );
+	}
+	$field->isnull( $self->VM->IsFieldNull($self->pbvalue, $fid) );
+	return $field;
+}
+
+sub GetFieldName{
+	my ($self, $fid) = @_;
+	return $self->VM->GetFieldName( $self->classid, $fid );
+}
+
+
+#TODO: next step = method & SIG !
 
 #~ sub DESTROY{
 	#~ my $self = shift;

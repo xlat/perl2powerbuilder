@@ -1,4 +1,4 @@
-use Test::More tests => 3 + 1 + 11*11;
+use Test::More tests => 3 + 1 + 11*13 +4;
 BEGIN { 
 	use_ok('Powerbuilder');
 	use_ok('Powerbuilder::PBVM');
@@ -43,6 +43,7 @@ sub look_numeric{
 #each call run 10 tests
 my $hit = 1;
 sub test_handle{ defined($_[0]) && $_[0]>0 }
+sub test_package_var{ defined($_[0]) && ref($_[0]) eq 'Powerbuilder::Variable' }
 sub variable_tests{
 	my ($tname, $var) = (shift, shift);
 	cmp_ok( ref $var, 'eq', 'Powerbuilder::Variable', "$tname: empty constructor ($hit)");
@@ -101,12 +102,22 @@ variable_tests( "Perl 'double'", $var, 'anonymous', 0, 0, 0, 0, 0, 0, pbvalue_do
 
 my $var2 = new Powerbuilder::Variable( "a string" );
 $var = new Powerbuilder::Variable( $var2 );
-variable_tests( "Perl 'double'", $var, 'anonymous', 0, 0, 0, 0, 0, 0, pbvalue_string, \&test_handle, 'a string' );
+variable_tests( "Perl 'Powerbuilder::Variable'", $var, 'anonymous', 0, 0, 0, 0, 0, 0, pbvalue_string, \&test_handle, 'a string' );
 
 # add test for new ( Powerbuilder::Value )
 #add Array tests:
 # add test for new( [ Powerbuilder::Variable, Powerbuilder::Variable, ... ] )
 # add test for new( [ Powerbuilder::Variable, Powerbuilder::Value, (type=>...,value=>...) ] )
+
+$var = new Powerbuilder::Variable( class=>'nv_proto' );
+variable_tests( "Perl 'new class'", $var, 'anonymous', 0, 1, 0, 0, 0, 0, $var->classid, \&test_handle, \&test_package_var );
+#or could use
+$var = create Powerbuilder::Variable( 'nv_proto' );
+variable_tests( "Perl 'create class'", $var, 'anonymous', 0, 1, 0, 0, 0, 0, $var->classid, \&test_handle, \&test_package_var );
+cmp_ok( $var->FieldCount, '==', 4+1, 'FieldCount' );	#4 fields + proxyname !
+cmp_ok( ref($var->GetField('is_msg')), 'eq', 'Powerbuilder::Variable', 'GetField' );
+cmp_ok( $var->GetField('is_msg')->value, 'eq', 'Welcome !', 'is_msg value' );
+cmp_ok( $var->GetFieldName(0), 'eq', 'proxyname', 'first field name' );
 
 #Others things to implement/tests:
 #- numeric operators +, -, *, /, ==, !=, >=, <=, <, >, ^
