@@ -1,29 +1,37 @@
 //#TODO: prefere Perl's memory allocation function than malloc/free
-#define PB105
+//~ #define PB100
+//~ #define PB105
 //~ #define PB115
+//~ #define PB120
 
-#ifdef PB115
-#define PBVM_DLL "pbvm115.dll"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbext.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbni.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\PBCTXIF.h"
+#ifdef PB105
+#define PBVM_DLL "pbvm100.dll"
 #endif
 
 #ifdef PB105
 #define PBVM_DLL "pbvm105.dll"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbext.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbni.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\PBCTXIF.h"
 #endif
+
+#ifdef PB115
+#define PBVM_DLL "pbvm115.dll"
+#endif
+
+#ifdef PB120
+#define PBVM_DLL "pbvm120.dll"
+#endif
+
+//This files are copied from your installation path by Makefile.PL
+#include "sybase/include/pbext.h"
+#include "sybase/include/pbni.h"
+#include "sybase/include/PBCTXIF.h"
 
 #include "stdio.h"
 
 #include "ppport.h"
 #include "const-c.inc"
 
-// Fixes :
-//  1) MATH.H  : patched by adding an #if !defined( H_PERL ) ...  template<class _Ty> ... #end if
-//  2) PBNI.H : commented redefinition of TRUE and FALSE constant !
+// Additional fixes :
+//  * in MATH.H  : patched by adding an #if !defined( H_PERL ) ...  template<class _Ty> ... #end if
 
 typedef PBXEXPORT PBXRESULT (*P_PB_GetVM)(IPB_VM** vm);
 #define PVOID (void*)

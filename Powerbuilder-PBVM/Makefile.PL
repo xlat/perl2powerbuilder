@@ -2,6 +2,11 @@ use 5.008008;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
+
+BEGIN{
+	use PreBuild;
+}
+
 WriteMakefile(
     NAME              => 'Powerbuilder::PBVM',
     VERSION_FROM      => 'lib/Powerbuilder/PBVM.pm', # finds $VERSION
@@ -12,7 +17,7 @@ WriteMakefile(
     LIBS              => [''], # e.g., '-lm'
     CC                => 'cl -TP',
     TYPEMAPS          => ['CPP.map', 'pbvm.map'],
-    DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
+    DEFINE            => "$PreBuild::PBVERSION", # e.g., '-DHAVE_SOMETHING'
     INC               => '-I.', # e.g., '-I. -I/usr/include/other'
 	# Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
