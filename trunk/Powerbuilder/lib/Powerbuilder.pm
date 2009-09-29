@@ -1,7 +1,5 @@
 package Powerbuilder;
 use Powerbuilder::PBVM;
-use Powerbuilder::Value;
-use Powerbuilder::Object;
 use 5.008008;
 #~ use strict;
 use warnings;
@@ -75,23 +73,6 @@ sub close{	#close session
 	$self->{VM}->ReleaseSession;
 }
 #-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-sub create{	#create an object
-	my $self = shift;
-	my $classname = shift;	#must be a classname
-	my $groupid;
-	
-	foreach my $group ( pbgroup_application , pbgroup_datawindow , pbgroup_function , 
-		pbgroup_menu , pbgroup_proxy , pbgroup_structure , 
-		pbgroup_userobject , pbgroup_window , pbgroup_unknown ){
-		$groupid = $self->{VM}->FindGroup( $classname,  $group) and last;
-	}
-	croak "no group for `$classname`" unless $groupid;
-	
-	my $classid = $self->{VM}->FindClass( $groupid, $classname ) or croak "no class for `$classname`";
-	my $pbobj = $self->{VM}->NewObject( $classid ) or croak "could not create object for `$classname`";
-	return new Powerbuilder::Object( $self, 0, $pbobj );
-}
 
 sub destroy{ #destroy an object
 }
