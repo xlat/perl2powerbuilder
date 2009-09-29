@@ -161,8 +161,7 @@ sub syncperl{
 		#~ $self->VM->GetDecimal( $self->{pbvalue}, "".$self->value );
 	}
 	elsif($self->datatypeof == pbvalue_blob){
-		#~ $self->value( $self->VM->GetBlob( $self->pbvalue ) );
-		$self->value( $self->pbvalue );
+		$self->value( $self->VM->unref( $self->VM->GetBlob( $self->pbvalue ) ) );
 	}
 	else{
 		croak("** in syncperl auto-instantiate Not implemented yet for datatypeof=".$self->datatypeof."!\n");
@@ -315,7 +314,7 @@ sub GetField{
 			value => $value );	#TODO: look in set(...) for value if any, then don't 
 								# call NewObject but simply set the pbvalue !
 	}
-	elsif($self->VM->IsFieldObject( $cid, $fid )){
+	elsif($self->VM->IsFieldArray( $cid, $fid )){
 		croak("Array not handled yet!\n");
 		#TODO: handle arrays !!!
 		#if SimpleArray :
