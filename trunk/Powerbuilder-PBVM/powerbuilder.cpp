@@ -4,7 +4,7 @@
 //~ #define PB115
 //~ #define PB120
 
-#ifdef PB105
+#ifdef PB100
 #define PBVM_DLL "pbvm100.dll"
 #endif
 
@@ -1570,7 +1570,10 @@ class PBVM {
 //**********************************************************
 //	End of the new type BYTE
 //**********************************************************
-
+	bool doesScalarContainNumber(SV* sv ){
+		return SvNIOK( sv );
+	}
+	
 private:
 	HINSTANCE i_hinst;
 	P_PB_GetVM getvm;
@@ -1578,4 +1581,3 @@ private:
 	IPB_Session* i_session;
 	bool i_injected;
 };
-
