@@ -18,32 +18,20 @@ extern "C" {
 //~ #define PB115
 //~ #define PB120
 
-#ifdef PB105
+#ifdef PB100
 #define PBVM_DLL "pbvm100.dll"
-/*#include "C:\\Program Files\\Sybase\\PowerBuilder 10.0\\SDK\\PBNI\\include\\pbext.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.0\\SDK\\PBNI\\include\\pbni.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.0\\SDK\\PBNI\\include\\PBCTXIF.h"*/
 #endif
 
 #ifdef PB105
 #define PBVM_DLL "pbvm105.dll"
-/*#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbext.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\pbni.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 10.5\\SDK\\PBNI\\include\\PBCTXIF.h"*/
 #endif
 
 #ifdef PB115
 #define PBVM_DLL "pbvm115.dll"
-/*#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbext.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\pbni.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 11.5\\SDK\\PBNI\\include\\PBCTXIF.h"*/
 #endif
 
 #ifdef PB120
 #define PBVM_DLL "pbvm120.dll"
-/*#include "C:\\Program Files\\Sybase\\PowerBuilder 12.0\\SDK\\PBNI\\include\\pbext.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 12.0\\SDK\\PBNI\\include\\pbni.h"
-#include "C:\\Program Files\\Sybase\\PowerBuilder 12.0\\SDK\\PBNI\\include\\PBCTXIF.h"*/
 #endif
 
 //This files are copied from your installation path by Makefile.PL
@@ -56,9 +44,8 @@ extern "C" {
 #include "ppport.h"
 #include "const-c.inc"
 
-// Fixes :
-//  1) MATH.H  : patched by adding an #if !defined( H_PERL ) ...  template<class _Ty> ... #end if
-//  2) PBNI.H : commented redefinition of TRUE and FALSE constant !
+// Additional fixes :
+//  * in MATH.H  : patched by adding an #if !defined( H_PERL ) ...  template<class _Ty> ... #end if
 
 typedef PBXEXPORT PBXRESULT (*P_PB_GetVM)(IPB_VM** vm);
 #define PVOID (void*)
@@ -609,7 +596,7 @@ class PBVM {
 	unsigned short      GetFieldType(void* cl, unsigned short f){ 
 		return (unsigned short)session->GetFieldType((pbclass)cl, f); 
 	}
-	unsigned long     GetNumOfFields(void* cl){ 
+	unsigned long     GetNumOfFields(unsigned long cl){ 
 		return (unsigned long)session->GetNumOfFields((pbclass)cl); 
 	}
 	char* GetFieldName(void* cl , unsigned short f){ 
@@ -1597,7 +1584,10 @@ class PBVM {
 //**********************************************************
 //	End of the new type BYTE
 //**********************************************************
-
+	bool doesScalarContainNumber(SV* sv ){
+		return SvNIOK( sv );
+	}
+	
 private:
 	HINSTANCE i_hinst;
 	P_PB_GetVM getvm;
@@ -1605,7 +1595,6 @@ private:
 	IPB_Session* i_session;
 	bool i_injected;
 };
-
 
 MODULE = Powerbuilder::PBVM     	PACKAGE = Powerbuilder::Value
 
@@ -2664,7 +2653,7 @@ PBVM::GetFieldType(cl, f)
     
 unsigned long
 PBVM::GetNumOfFields(cl)
-	void *	cl
+	unsigned long	cl
     
 char *
 PBVM::GetFieldName(cl, f)
@@ -3846,6 +3835,10 @@ PBVM::SetByteArrayItem(array, dim_array, v)
 	void *	array
 	AV *	dim_array
 	unsigned short	v
+    
+bool
+PBVM::doesScalarContainNumber(sv)
+	SV *	sv
     
 MODULE = Powerbuilder::PBVM     	PACKAGE = Powerbuilder	
 

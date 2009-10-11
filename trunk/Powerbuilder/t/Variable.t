@@ -1,4 +1,4 @@
-use Test::More tests => 3 + 1 + 11*13 +4;
+use Test::More tests => 3 + 1 + 11*13 +7;
 BEGIN { 
 	use_ok('Powerbuilder');
 	use_ok('Powerbuilder::PBVM');
@@ -11,33 +11,7 @@ my $pb = new Powerbuilder( 'scriptingpb.pbt' );
 cmp_ok( ref( $pb ), 'eq', 'Powerbuilder', 'openning session' );
 
 sub isnumeric{ 	
-	use Scalar::Util qw( looks_like_number  );
-	return &looks_like_number;
-	#~ return &look_numeric; 
-	#It seams that XS stdout is not captured :o(
-	#~ use Devel::Peek;
-	#~ use IO::String;	# to redirect STDERR into $str string
-	#~ my $var = shift;
-	#~ my ($strout, $strerr);
-	#~ do{
-		#~ local *STDERR = IO::String->new($strerr);
-		#~ local *STDOUT = IO::String->new($strout);
-		STDOUT->autoflush();
-		#~ Devel::Peek::Dump($var);
-	#~ };	
-	#~ return $strerr =~ /FLAGS\s*=\s*\(\s*IOK,/m;
-}	#may I use a Devel::Peek to be sure...
-sub look_numeric{
-	return $_[0] =~ /#Decimal (signed) (comma) (exponed)
-					^[+-]?\d*[.,]?\d*d?([Ee]\d+)?$
-					| #Binary (signed)
-					^[+-]?[01]+b$
-					| #hexa a86 like (signed)
-					^[+-]?[0-9a-fA-F]+[Hh]$
-					| #hexa basic like (signed)
-					^[+-]?&[hH][0-9a-fA-F]+$
-					| #hexa c like (signed)
-					^[+-]?0x[0-9a-fA-F]+$/xi;
+	return $pb->VM->doesScalarContainNumber( $_[0] );
 }
 
 #each call run 10 tests
@@ -120,13 +94,21 @@ cmp_ok( ref($var->GetField('is_msg')), 'eq', 'Powerbuilder::Variable', 'GetField
 cmp_ok( $var->GetField('is_msg')->value, 'eq', 'Welcome !', 'is_msg value' );
 cmp_ok( $var->GetFieldName(0), 'eq', 'proxyname', 'first field name' );
 
+#todo: field setter
+$var->SetField('is_msg', 'Thank you!');
+cmp_ok( $var->GetField('is_msg')->value, 'eq', 'Thank you!', 'is_msg setted value' );
+#todo: autoload / fields
+cmp_ok( $var->is_msg->value, 'eq', 'Thank you!', 'is_msg autoload value' );
+cmp_ok( $var->is_msg, 'eq', 'Thank you!', 'is_msg autoload + toString operator' );
+#~ cmp_ok( $var->Invoke('test2', 30, 1), '==', 31, 'Invoke method' );
+#~ cmp_ok( $var->test2(30, 1), '==', 31, 'autoload method' );
+
 #Others things to implement/tests:
 #- numeric operators +, -, *, /, ==, !=, >=, <=, <, >, ^
 #- string operators ., eq, ne, lt, gt, le, ge
 #- array operators [ index ] getter / setter
 #- object -> methods and fields
 #	be care: a Variable of type pbvalue_object need a special AUTOLOAD !
-
 
 END{
 		chdir '..';

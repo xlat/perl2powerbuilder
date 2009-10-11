@@ -4,6 +4,8 @@
 //~ #define PB115
 //~ #define PB120
 
+//~ #define USE_LONGLONG
+
 #ifdef PB100
 #define PBVM_DLL "pbvm100.dll"
 #endif
@@ -113,9 +115,11 @@ public:
 	void* GetDateTime(){ 
 		return (pbdatetime)pb_val->GetDateTime(); 
 	}
-/*//	pblonglong GetLongLong(){ 
-//		return (pblonglong)pb_val->GetLongLong(); 
-//	}*/
+#if defined USE_LONGLONG 
+	pblonglong GetLongLong(){ 
+		return (pblonglong)pb_val->GetLongLong(); 
+	}
+#endif
 	void* GetBlob(){ 
 		return (pbblob)pb_val->GetBlob(); 
 	}
@@ -164,9 +168,11 @@ public:
 	long SetDateTime(void* v){ 
 		return (long)pb_val->SetDateTime((pbdatetime)v); 
 	}
-/*//	long SetLongLong(pblonglong){ 
-//		return (long)pb_val->SetLongLong(pblonglong); 
-//	}*/
+#if defined USE_LONGLONG
+	long SetLongLong(pblonglong){ 
+		return (long)pb_val->SetLongLong(pblonglong); 
+	}
+#endif
 	long SetBlob(void* v){ 
 		return (long)pb_val->SetBlob((pbblob)v); 
 	}
@@ -519,9 +525,11 @@ class PBVM {
 	long AddCharArgument(void* ci, unsigned short value, short isNull=FALSE){ 
 		return (long)session->AddCharArgument((PBCallInfo *)ci, value, isNull); 
 	}
-	/*//~ long AddLongLongArgument(void* ci, longlong value, short isNull=FALSE){ 
-		//~ return (long)session->AddLongLongArgument((PBCallInfo *)ci, value, isNull); 
-	//~ }*/
+#if defined USE_LONGLONG
+	long AddLongLongArgument(void* ci, longlong value, short isNull=FALSE){ 
+		return (long)session->AddLongLongArgument((PBCallInfo *)ci, value, isNull); 
+	 }
+#endif
 	long AddObjectArgument(void* ci, void* value, short isNull=FALSE){ 
 		return (long)session->AddObjectArgument((PBCallInfo *)ci, (pbobject) value, isNull); 
 	}
@@ -582,7 +590,7 @@ class PBVM {
 	unsigned short      GetFieldType(void* cl, unsigned short f){ 
 		return (unsigned short)session->GetFieldType((pbclass)cl, f); 
 	}
-	unsigned long     GetNumOfFields(void* cl){ 
+	unsigned long     GetNumOfFields(unsigned long cl){ 
 		return (unsigned long)session->GetNumOfFields((pbclass)cl); 
 	}
 	char* GetFieldName(void* cl , unsigned short f){ 
@@ -687,12 +695,14 @@ class PBVM {
 		sv_setpviv( isNullsv, isNull );
 		return res;  
 	}
-	/*//~ longlong GetLongLongField(void* obj, unsigned short fid, SV* isNullsv){ 
-		//~ short isNull;
-		//~ longlong res = (longlong)session->GetLongLongField((pbobject) obj,  fid, isNull); 
-		//~ sv_setpviv( isNullsv, isNull );
-		//~ return res;  
-	//~ }*/
+#if defined USE_LONGLONG
+	longlong GetLongLongField(void* obj, unsigned short fid, SV* isNullsv){ 
+		short isNull;
+		longlong res = (longlong)session->GetLongLongField((pbobject) obj,  fid, isNull); 
+		sv_setpviv( isNullsv, isNull );
+		return res;  
+	}
+#endif
 	void* GetObjectField(void* obj, unsigned short fid, SV* isNullsv){ 
 		short isNull;
 		void* res = (pbobject)session->GetObjectField((pbobject) obj,  fid, isNull); 
@@ -750,9 +760,11 @@ class PBVM {
 	long SetCharField(void* obj, unsigned short fid, unsigned short value){ 
 		return (long)session->SetCharField((pbobject) obj,  fid, value); 
 	}
-	/*//~ long SetLongLongField(void* obj, unsigned short fid, longlong value){ 
-		//~ return (long)session->SetLongLongField((pbobject) obj,  fid, longlong value); 
-	//~ }*/
+#if defined USE_LONGLONG
+	long SetLongLongField(void* obj, unsigned short fid, longlong value){ 
+		return (long)session->SetLongLongField((pbobject) obj,  fid, longlong value); 
+	}
+#endif
 	long SetObjectField(void* obj, unsigned short fid, void* value){ 
 		return (long)session->SetObjectField((pbobject) obj,  fid, (pbobject) value); 
 	}
@@ -861,12 +873,14 @@ class PBVM {
 		sv_setpviv( isNullsv, isNull );
 		return res;  
 	}
-	/*//~ longlong GetLongLongSharedVar(void* group, unsigned short fid, SV* isNullsv){ 
-		//~ short isNull;
-		//~ longlong res = (longlong)session->GetLongLongSharedVar((pbgroup) group,  fid, isNull); 
-		//~ sv_setpviv( isNullsv, isNull );
-		//~ return res;  
-	//~ }*/
+#if defined USE_LONGLONG
+	longlong GetLongLongSharedVar(void* group, unsigned short fid, SV* isNullsv){ 
+		short isNull;
+		longlong res = (longlong)session->GetLongLongSharedVar((pbgroup) group,  fid, isNull); 
+		sv_setpviv( isNullsv, isNull );
+		return res;  
+	}
+#endif
 	void* GetObjectSharedVar(void* group, unsigned short fid, SV* isNullsv){ 
 		short isNull;
 		void* res = (pbobject)session->GetObjectSharedVar((pbgroup) group,  fid, isNull); 
@@ -922,11 +936,13 @@ class PBVM {
 		return (long)session->SetDateTimeSharedVar((pbgroup) group,  fid, (pbdatetime)value); 
 	}
 	long SetCharSharedVar(void* group, unsigned short fid, unsigned short value){ 
-		return (long)session->SetCharSharedVar((pbgroup) group,  fid, value); 
+		return (long)session->SetCharSharedVar((pbgroup) group,  fid, value); 	
 	}
-	/*//~ long SetLongLongSharedVar(void* group, unsigned short fid, longlong value){ 
-		//~ return (long)session->SetLongLongSharedVar((pbgroup) group,  fid, (longlong) value); 
-	//~ }*/
+#if defined USE_LONGLONG
+	long SetLongLongSharedVar(void* group, unsigned short fid, longlong value){ 
+		return (long)session->SetLongLongSharedVar((pbgroup) group,  fid, (longlong) value); 
+	}
+#endif
 	long SetObjectSharedVar(void* group, unsigned short fid, void* value){ 
 		return (long)session->SetObjectSharedVar((pbgroup) group,  fid, (pbobject) value); 
 	}
@@ -1036,12 +1052,14 @@ class PBVM {
 		sv_setpviv( isNullsv, isNull );
 		return res;  
 	}
-	/*//~ longlong GetLongLongGlobalVar(unsigned short fid, SV* isNullsv){ 
-		//~ short isNull;
-		//~ longlong res = (longlong)session->GetLongLongGlobalVar( fid, isNull); 
-		//~ sv_setpviv( isNullsv, isNull );
-		//~ return res;  
-	//~ }*/
+#if defined USE_LONGLONG
+	longlong GetLongLongGlobalVar(unsigned short fid, SV* isNullsv){ 
+		short isNull;
+		longlong res = (longlong)session->GetLongLongGlobalVar( fid, isNull); 
+		sv_setpviv( isNullsv, isNull );
+		return res;  
+	}
+#endif
 	void* GetObjectGlobalVar(unsigned short fid, SV* isNullsv){ 
 		short isNull;
 		void* res = (pbobject)session->GetObjectGlobalVar( fid, isNull); 
@@ -1099,9 +1117,11 @@ class PBVM {
 	long SetCharGlobalVar(unsigned short fid, char value){ 
 		return (long)session->SetCharGlobalVar( fid, (unsigned short)value); 
 	}
-	/*//~ long SetLongLongGlobalVar(unsigned short fid, longlong value){ 
-		//~ return (long)session->SetLongLongGlobalVar( fid, longlong value); 
-	//~ }*/
+#if defined USE_LONGLONG
+	long SetLongLongGlobalVar(unsigned short fid, longlong value){ 
+		return (long)session->SetLongLongGlobalVar( fid, longlong value); 
+	}
+#endif
 	long SetObjectGlobalVar(unsigned short fid, void* value){ 
 		return (long)session->SetObjectGlobalVar( fid, (pbobject) value); 
 	}
@@ -1303,14 +1323,16 @@ class PBVM {
 		Safefree( dim );
 		return res;
 	}
-	/*//~ longlong GetLongLongArrayItem(void*  array, AV* dim_array, SV* isNullsv){ 
-		//~ short isNull;
-		//~ long * dim = __AV2LongPtrPtr( dim_array );
-		//~ longlong res = (longlong)session->GetLongLongArrayItem((pbarray) array, dim, isNull); 
-		//~ sv_setpviv( isNullsv, isNull );
-		//~ Safefree( dim );
-		//~ return res;  
-	//~ }*/
+#if defined USE_LONGLONG
+	longlong GetLongLongArrayItem(void*  array, AV* dim_array, SV* isNullsv){ 
+		short isNull;
+		long * dim = __AV2LongPtrPtr( dim_array );
+		longlong res = (longlong)session->GetLongLongArrayItem((pbarray) array, dim, isNull); 
+		sv_setpviv( isNullsv, isNull );
+		Safefree( dim );
+		return res;  
+	}
+#endif
 	void* GetObjectArrayItem(void*  array, AV* dim_array, SV* isNullsv){ 
 		short isNull;
 		long * dim = __AV2LongPtrPtr( dim_array );
@@ -1410,12 +1432,14 @@ class PBVM {
 		Safefree( dim );
 		return retval;
 	}
-	/*//~ long SetLongLongArrayItem(void*  array, AV* dim_array, longlong){ 
-		//~ long * dim = __AV2LongPtrPtr( dim_array );
-		//~ long retval = (long)session->SetLongLongArrayItem((pbarray) array, dim, longlong); 
-		//~ Safefree( dim );
-		//~ return retval;
-	//~ }*/
+#if defined USE_LONGLONG
+	long SetLongLongArrayItem(void*  array, AV* dim_array, longlong){ 
+		long * dim = __AV2LongPtrPtr( dim_array );
+		long retval = (long)session->SetLongLongArrayItem((pbarray) array, dim, longlong); 
+		Safefree( dim );
+		return retval;
+	}
+#endif
 	long SetObjectArrayItem(void*  array, AV* dim_array, void* v){ 
 		long * dim = __AV2LongPtrPtr( dim_array );
 		long retval = (long)session->SetObjectArrayItem((pbarray) array, dim, (pbobject) v); 
