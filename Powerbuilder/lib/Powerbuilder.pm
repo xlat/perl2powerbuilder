@@ -72,8 +72,67 @@ sub close{	#close session
 	my $self = shift;
 	$self->{VM}->ReleaseSession;
 }
-#-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
+use Memoize;
+memoize('GetClassDefinition');
+
+sub GetClassDefinition{
+	use Powerbuilder::Variable;
+	use Powerbuilder::ClassDefinition;
+	my $self = shift;
+	my $class = shift; #could be the Id or the Name;
+	#~ warn "**** GetClassDefinition( $class ) **** Memoised !\n";
+	
+	my $session = $self->VM;
+	$class = $session->GetClassName( $class ) if $class =~ /^\d+$/;	
+	my $sgrp = $session->GetSystemGroup() 
+							or croak("GetClassDefinition: GetSystemGroup failed");
+	my $scls = $session->FindClass($sgrp, "SystemFunctions") 
+							or croak("GetClassDefinition: FindClass(systemfunction) failed");
+	#~ "FindClassDefinition", "Cclassdefinition.S"
+	my $smid = $session->GetMethodID($scls, "FindClassDefinition", PBRT_FUNCTION, "Cclassdefinition.S") 
+							or croak("GetClassDefinition: Get mid of system function failed");
+	my $cinfo = new Powerbuilder::CallInfo;
+	$session->InitCallInfo( $scls, $smid, $cinfo->get() );
+	$arg = new Powerbuilder::Arguments( $cinfo->Args() );
+	my $argval = new Powerbuilder::Value( $arg->GetAt(0) );
+	$argval->SetString($class);
+	$session->InvokeClassFunction( $scls, $smid, $cinfo->get() );
+	my $returnValue = new Powerbuilder::Value( $cinfo->returnValue() );
+	die "GetClassDefinition: NoClassDefinition for `$class`!\n" if $returnValue->IsNull();
+	my $classdef = new Powerbuilder::ClassDefinition( type=>'object', value=>$returnValue->GetObject );
+	#Should we autoreference the pbobject with IPB_Session::AddGlobalReference() ?
+	$session->FreeCallInfo( $cinfo->get() );
+	return $classdef;
+}
+
+sub FindTypeDefinition{
+	use Powerbuilder::Variable;
+	my $self = shift;
+	my $typename = shift; #name of type
+	my $session = $self->VM;
+	my $sgrp = $session->GetSystemGroup() 
+							or croak("GetClassDefinition: GetSystemGroup failed");
+	my $scls = $session->FindClass($sgrp, "SystemFunctions") 
+							or croak("GetClassDefinition: FindClass(systemfunction) failed");
+	#~ "FindClassDefinition", "Cclassdefinition.S"
+	my $smid = $session->GetMethodID($scls, "FindTypeDefinition", PBRT_FUNCTION, "Ctypedefinition.S")
+							or croak("GetClassDefinition: Get mid of system function failed");
+	my $cinfo = new Powerbuilder::CallInfo;
+	$session->InitCallInfo( $scls, $smid, $cinfo->get() );
+	$arg = new Powerbuilder::Arguments( $cinfo->Args() );
+	my $argval = new Powerbuilder::Value( $arg->GetAt(0) );
+	$argval->SetString($typename);
+	$session->InvokeClassFunction( $scls, $smid, $cinfo->get() );
+	my $returnValue = new Powerbuilder::Value( $cinfo->returnValue() );
+	die "GetClassDefinition: NoTypeDefinition for `$typename`!\n" if $returnValue->IsNull();
+	my $typedef = new Powerbuilder::Variable( type=>'object', value=>$returnValue->GetObject );
+	#Should we autoreference the pbobject with IPB_Session::AddGlobalReference() ?
+	$session->FreeCallInfo( $cinfo->get() );
+	return $typedef;
+}
+
+#-+-+-+-+-+-+-+-+-+-+-+-+-+-
 sub destroy{ #destroy an object
 }
 
