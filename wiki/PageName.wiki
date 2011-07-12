@@ -11,4 +11,6 @@ Working with Powerbuilder
 * v11.5 (tested on build 3127)
 * v10.5 (need some change in source... dirty at this time)
 
-*documentation in progress : you are welcome !*
+This project is not active anymore. If you are candidate to make it evolve don't hesitate to send me an email;
+
+I am working in another way to link perl and powerbuilder together (http://embeddingperl.com), still using PBNI but Powerbuilder driven.
